@@ -16,14 +16,27 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    $instance = new User();
-    $users = $instance->paginate(15);
-    $usersCountByStatus = $instance->select([
+    $instance = User::query();
+    $users = $instance->paginate(50);
+    $usersCountByStatus = User::query()->select([
+        'users.status',
         DB::raw('CASE 
                     WHEN status = 1 THEN "admin"
                     WHEN status = 2 THEN "user"
                     WHEN status = 3 THEN "customer"
-                END as status_name'),
+                    WHEN status = 4 THEN "customer"
+                    WHEN status = 5 THEN "customer"
+                    WHEN status = 6 THEN "customer"
+                    WHEN status = 7 THEN "customer"
+                    WHEN status = 8 THEN "customer"
+                    WHEN status = 9 THEN "customer"
+                    WHEN status = 10 THEN "customer"
+                    WHEN status = 11 THEN "customer"
+                    WHEN status = 12 THEN "customer"
+                    WHEN status = 13 THEN "customer"
+                    WHEN status = 14 THEN "customer"
+                    WHEN status = 15 THEN "customer"
+                END as status_text'),
         DB::raw('COUNT(*) as total')
     ])
         ->groupBy('status')
