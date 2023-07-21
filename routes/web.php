@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Order;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
@@ -16,7 +17,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-
+    // Order::factory()->count(100)->create();
 
     $statusLabels = [
         "1" => "Alice",
@@ -49,4 +50,20 @@ Route::get('/', function () {
     return response()->json(array_merge([
         'data' => collect($users)->toArray()
     ], ['total' => $data]));
+});
+
+Route::get('/users-with-orders', function () {
+    $usersWithTotal = User::with('orders')
+        ->select([
+            'users.id',
+            'users.name',
+            'users.email',
+            DB::raw('(select sum(`orders`.`total`) from `orders` where `users`.`id` = `orders`.`user_id`) as `orders_total_price`'),
+            DB::raw('(select count(*) from `orders` where `users`.`id` = `orders`.`user_id`) as `orders_count`'),
+        ])
+        ->groupBy(['users.id', 'users.name', 'users.email'])
+        ->havingRaw('orders_count > 2')
+        ->get();
+
+    return response()->json($usersWithTotal);
 });
