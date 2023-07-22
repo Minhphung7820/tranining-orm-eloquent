@@ -2,6 +2,7 @@
 
 use App\Models\Order;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
@@ -16,9 +17,8 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
+Route::get('/', function (Request $request) {
     // Order::factory()->count(100)->create();
-
     $statusLabels = [
         "1" => "Alice",
         "2" => "Bob",
@@ -38,18 +38,25 @@ Route::get('/', function () {
     ];
 
     $user = new User();
+    $users = $user->paginate($request->limit);
 
-    $users = $user->paginate(15);
-
-    $data = $user->get()->groupBy('status')->map(function ($group) {
+    $statusCounts = $user->get()->groupBy('status')->map(function ($group) {
         return $group->count();
-    })->mapWithKeys(function ($count, $status) use ($statusLabels) {
+    });
+
+
+    $statusCounts = collect($statusLabels)->mapWithKeys(function ($label, $status) use ($statusCounts) {
+        return [$status => $statusCounts->get($status, 0)];
+    });
+
+    $data = $statusCounts->mapWithKeys(function ($count, $status) use ($statusLabels) {
         return ['total_user_with_name_' . $statusLabels[$status] => $count];
     })->toArray();
 
-    return response()->json(array_merge([
-        'data' => collect($users)->toArray()
-    ], ['total' => $data]));
+    return response()->json([
+        'data' => $users->toArray(),
+        'total' => $data
+    ]);
 });
 
 Route::get('/users-with-orders', function () {
@@ -63,6 +70,8 @@ Route::get('/users-with-orders', function () {
         ])
         ->groupBy(['users.id', 'users.name', 'users.email'])
         ->havingRaw('orders_count > 2')
+        ->orderByDesc('orders_total_price') // Sắp xếp giảm dần theo orders_total_price
+        ->limit(3) // Lấy 3 bản ghi đầu tiên
         ->get();
 
     return response()->json($usersWithTotal);
