@@ -2,7 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Arr;
 
 class OrderFactory extends Factory
 {
@@ -13,8 +15,12 @@ class OrderFactory extends Factory
      */
     public function definition()
     {
+        $ids = User::pluck('id');
+
+        // Lấy kết quả dưới dạng mảng
+        $idsArray = collect($ids->all())->toArray();
         return [
-            'user_id' => random_int(1, 100),
+            'user_id' => Arr::random($idsArray),
             'total' => $this->randomEvenPrice(),
         ];
     }
