@@ -76,3 +76,51 @@ Route::get('/users-with-orders', function () {
 
     return response()->json($usersWithTotal);
 });
+
+Route::get("/overtime", function () {
+    $array = [
+        "08:10:00",
+        "08:35:00",
+        "08:40:00",
+        "09:40:00",
+        "09:44:00",
+        '13:15:00',
+        '13:34:00',
+        "16:49:00",
+        "17:50:00",
+        "18:10:00",
+        '18:15:00',
+        '18:32:00',
+        '18:40:00',
+        '18:45:00',
+        '18:47:30',
+        '18:52:40',
+        '18:59:00',
+        '19:00:00',
+        '20:20:00',
+        '20:22:00',
+        '20:58:36',
+        '21:23:00'
+    ];
+    $startWorkingTime = ['08:30:00', '13:30:00', '18:30:00'];
+    $endWorkingTime = ["10:30:00", '17:00:00', '21:00:00'];
+
+    $shifts = collect($startWorkingTime)->zip($endWorkingTime)->mapWithKeys(function ($shift, $index) use ($array) {
+        $validEntries = collect($array)->filter(function ($time) use ($shift) {
+            return $time >= $shift[0] && $time <= $shift[1];
+        });
+
+        $checkIn = $validEntries->min();
+        $checkOut = $validEntries->max();
+
+        return [
+            "shift_" . ($index + 1) => [
+                "check_in" => $checkIn,
+                "check_out" => $checkOut
+            ]
+        ];
+    });
+
+    $result = $shifts->toArray();
+    return response()->json($result);
+});
