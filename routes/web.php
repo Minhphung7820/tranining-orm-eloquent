@@ -78,8 +78,10 @@ Route::get('/users-with-orders', function () {
 });
 
 Route::get("/overtime", function () {
+    // Dùng collection không dùng vòng lặp
     $array = [
         "08:10:00",
+        "08:33:00",
         "08:35:00",
         "08:40:00",
         "09:40:00",
@@ -102,6 +104,9 @@ Route::get("/overtime", function () {
         '20:58:36',
         '21:23:00'
     ];
+    // Ca 1 : Từ 8h30  -> 10:30
+    // Ca 2 : Từ 13:30 -> 17:00
+    // Ca 3 : Từ 18:30 -> 21:00
     $startWorkingTime = ['08:30:00', '13:30:00', '18:30:00'];
     $endWorkingTime = ["10:30:00", '17:00:00', '21:00:00'];
 
