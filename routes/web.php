@@ -2,6 +2,7 @@
 
 use App\Models\Order;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
@@ -81,11 +82,14 @@ Route::get("/overtime", function () {
     // Dùng collection không dùng vòng lặp
     $array = [
         "08:10:00",
-        "08:33:00",
-        "08:35:00",
-        "08:40:00",
+        "08:14:00",
+        // "08:15:00",
+        // "08:44:00",
+        "08:46:00",
         "09:40:00",
         "09:44:00",
+        "10:20:00",
+        "10:43:00",
         '13:15:00',
         '13:34:00',
         "16:49:00",
@@ -109,14 +113,42 @@ Route::get("/overtime", function () {
     // Ca 3 : Từ 18:30 -> 21:00
     $startWorkingTime = ['08:30:00', '13:30:00', '18:30:00'];
     $endWorkingTime = ["10:30:00", '17:00:00', '21:00:00'];
-
     $shifts = collect($startWorkingTime)->zip($endWorkingTime)->mapWithKeys(function ($shift, $index) use ($array) {
-        $validEntries = collect($array)->filter(function ($time) use ($shift) {
-            return $time >= $shift[0] && $time <= $shift[1];
+
+        $validEntries = collect($array)->filter(function ($time) use ($shift, $array) {
+            $startTimeBefore = Carbon::createFromFormat("H:i:s", $shift[0])->subMinutes(15);
+            $startTimeBefore->format('H:i:s');
+            $startTimeBefore = $startTimeBefore->toTimeString();
+
+            $startTimeAfter = Carbon::createFromFormat("H:i:s", $shift[0])->addMinutes(15);
+            $startTimeAfter->format('H:i:s');
+            $startTimeAfter = $startTimeAfter->toTimeString();
+
+            $endTimeBefore = Carbon::createFromFormat("H:i:s", $shift[1])->subMinutes(15);
+            $endTimeBefore->format('H:i:s');
+            $endTimeBefore = $endTimeBefore->toTimeString();
+
+            $endTimeAfter = Carbon::createFromFormat("H:i:s", $shift[1])->addMinutes(15);
+            $endTimeAfter->format('H:i:s');
+            $endTimeAfter = $endTimeAfter->toTimeString();
+
+            $arrayInVariableCheckIn = array_filter($array, function ($time) use ($startTimeBefore, $startTimeAfter) {
+                return $time >= $startTimeBefore && $time <= $startTimeAfter;
+            });
+
+            $arrayInVariableCheckOut = array_filter($array, function ($time) use ($endTimeBefore, $endTimeAfter) {
+                return $time >= $endTimeBefore && $time <= $endTimeAfter;
+            });
+
+            if (empty($arrayInVariableCheckIn) || empty($arrayInVariableCheckOut)) {
+                return null;
+            }
+
+            return ($time >= min($arrayInVariableCheckIn)) && ($time <= max($arrayInVariableCheckOut));
         });
 
-        $checkIn = $validEntries->min();
-        $checkOut = $validEntries->max();
+        $checkIn = $validEntries->min() ?? "Đi trễ không check in";
+        $checkOut = $validEntries->max() ?? "Không check out";
 
         return [
             "shift_" . ($index + 1) => [
