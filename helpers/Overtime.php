@@ -32,10 +32,10 @@ class Overtime
     public function getValidEntries($shift, $timesScan, $minutesFluctuates): array
     {
         return collect($timesScan)->filter(function ($time) use ($shift, $timesScan, $minutesFluctuates) {
-            $startTimeBefore = $this->formatTime($shift[0], $minutesFluctuates, false);
-            $startTimeAfter = $this->formatTime($shift[0], $minutesFluctuates);
-            $endTimeBefore = $this->formatTime($shift[1], $minutesFluctuates, false);
-            $endTimeAfter = $this->formatTime($shift[1], $minutesFluctuates);
+            $startTimeBefore = $this->getFluctuatingTime($shift[0], $minutesFluctuates, false);
+            $startTimeAfter = $this->getFluctuatingTime($shift[0], $minutesFluctuates);
+            $endTimeBefore = $this->getFluctuatingTime($shift[1], $minutesFluctuates, false);
+            $endTimeAfter = $this->getFluctuatingTime($shift[1], $minutesFluctuates);
 
             $arrayInVariableCheckIn = array_filter($timesScan, function ($time) use ($startTimeBefore, $startTimeAfter) {
                 return $time >= $startTimeBefore && $time <= $startTimeAfter;
@@ -76,7 +76,7 @@ class Overtime
         return $shifts->toArray();
     }
 
-    public function formatTime($time, $minutes, $flag = true): string
+    public function getFluctuatingTime($time, $minutes, $flag = true): string
     {
         $parse = Carbon::createFromFormat("H:i:s", $time);
         if ($flag) {
