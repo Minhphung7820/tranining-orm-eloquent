@@ -66,7 +66,7 @@ class Overtime
             $checkOut = !empty($validEntries) ? max($validEntries) : null;
 
             return [
-                "shift_" . ($index + 1) => [
+                "time_config_" . ($index + 1) => [
                     "check_in" => $checkIn,
                     "check_out" => $checkOut
                 ]
