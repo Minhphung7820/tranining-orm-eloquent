@@ -50,7 +50,7 @@ class Timekeeping extends Model
             static::$timefillter['month']  =  (int)now()->month;
         }
 
-        return self::query()
+        $timeKeepings = self::query()
             ->with([
                 'employee:id,name,shift_id',
                 'shift:id,name_shift'
@@ -62,8 +62,29 @@ class Timekeeping extends Model
                 'employee_id',
                 'shift_id',
                 'type',
-            ])->where('type', 'overtime')
-            ->paginate($request->limit);
+            ])->where('type', 'overtime');
+
+        if (isset($request->department_id) && $request->department_id) {
+            $timeKeepings->whereHas('employee.department', function ($query) use ($request) {
+                $query->where('departments.id', $request->department_id);
+            });
+        }
+
+        if (isset($request->position_id) && $request->position_id) {
+            $timeKeepings->whereHas('employee.position', function ($query) use ($request) {
+                $query->where('positions.id', $request->position_id);
+            });
+        }
+
+        if (isset($request->job_title_id) && $request->job_title_id) {
+            $timeKeepings->whereHas('employee.job_title', function ($query) use ($request) {
+                $query->where('job_titles.id', $request->job_title_id);
+            });
+        }
+
+        $data = $timeKeepings->paginate($request->limit);
+
+        return $data;
     }
 
     public function getDataOvertimeTimekeepingAttribute()
