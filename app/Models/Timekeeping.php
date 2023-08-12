@@ -52,7 +52,10 @@ class Timekeeping extends Model
 
         $timeKeepings = self::query()
             ->with([
-                'employee:id,name,shift_id',
+                'employee:id,name,shift_id,position_id,department_id,job_id',
+                'employee.department:id,name',
+                'employee.position:id,name',
+                'employee.job_title:id,name',
                 'shift:id,name_shift'
             ])->select([
                 'employee_id',
