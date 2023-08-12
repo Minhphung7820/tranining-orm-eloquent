@@ -50,6 +50,7 @@ class Timekeeping extends Model
 
         $getMasterOfEmployee = DB::table('timekeepings')
             ->where('employee_id', $this->employee_id)
+            ->where('type', 'overtime')
             ->pluck('id')
             ->toArray();
         $groupedResult = [];
