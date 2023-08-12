@@ -56,7 +56,8 @@ class Timekeeping extends Model
                 'employee.department:id,name',
                 'employee.position:id,name',
                 'employee.job_title:id,name',
-                'shift:id,name_shift'
+                'shift:id,name_shift',
+                'shift.configOvertimes:id,shift_id,form_shift,coefficient'
             ])->select([
                 'employee_id',
                 'shift_id',
@@ -83,6 +84,28 @@ class Timekeeping extends Model
             $timeKeepings->whereHas('employee.job_title', function ($query) use ($request) {
                 $query->where('job_titles.id', $request->job_title_id);
             });
+        }
+
+        if (isset($request->type_overtime) && $request->type_overtime) {
+            switch ($request->type_overtime) {
+                case 'overtime_with_coefficient':
+                    $timeKeepings->whereHas('shift.configOvertimes', function ($query) {
+                        $query->where('overtime_configs.form_shift', 'calculate_salary');
+                        $query->where('coefficient', '>', 1);
+                    });
+                    break;
+                case 'uncompensated_overtime':
+                    $timeKeepings->whereHas('shift.configOvertimes', function ($query) {
+                        $query->where('overtime_configs.form_shift', 'calculate_salary');
+                        $query->where('coefficient', 1);
+                    });
+                    break;
+                case 'compensatory_time_off':
+                    $timeKeepings->whereHas('shift.configOvertimes', function ($query) {
+                        $query->where('overtime_configs.form_shift', 'off_compensate');
+                    });
+                    break;
+            }
         }
 
         $data = $timeKeepings->paginate($request->limit);

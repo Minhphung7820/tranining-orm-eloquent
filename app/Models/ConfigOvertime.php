@@ -15,6 +15,8 @@ class ConfigOvertime extends Model
         'id',
         'shift_id',
         'start_time',
-        'end_time'
+        'end_time',
+        'form_shift',
+        'coefficient'
     ];
 }

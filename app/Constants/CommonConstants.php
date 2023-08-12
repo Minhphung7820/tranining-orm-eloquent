@@ -12,4 +12,10 @@ final class CommonConstants
         'holiday' => 'Ngày lễ',
         'holiday_night' => 'Ngày lễ (đêm)'
     ];
+
+    public const TYPE_OVERTIME = [
+        "overtime_with_coefficient" => "Tăng ca có hệ số",
+        "uncompensated_overtime" => "Tăng ca không có hệ số",
+        "compensatory_time_off" => "Tăng ca nghĩ bù"
+    ];
 }
