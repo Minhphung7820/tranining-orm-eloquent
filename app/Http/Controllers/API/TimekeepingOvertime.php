@@ -15,21 +15,7 @@ class TimekeepingOvertime extends Controller
      */
     public function index(Request $request)
     {
-        $data = Timekeeping::query()
-            ->fillterTime('2023', '08')
-            ->with([
-                'employee:id,name,shift_id',
-                'shift:id,name_shift'
-            ])->select([
-                'employee_id',
-                'shift_id',
-                'type',
-            ])->groupBy([
-                'employee_id',
-                'shift_id',
-                'type',
-            ])->where('type', 'overtime')
-            ->paginate($request->limit);
+        $data = Timekeeping::getSummaryOvertimeTimekeeping($request);
         return response()->json($data);
     }
 

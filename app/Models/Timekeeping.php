@@ -11,7 +11,7 @@ class Timekeeping extends Model
 {
     use HasFactory;
 
-    protected $timefillter = [
+    protected static $timefillter = [
         'year' => null,
         'month' => null
     ];
@@ -35,15 +35,37 @@ class Timekeeping extends Model
         return $this->belongsTo(EmployeeShift::class, 'shift_id');
     }
 
-    public function setTimeFilter($year, $month)
+    public static function getSummaryOvertimeTimekeeping($request)
     {
-        $this->timefillter = [
-            'year' => $year,
-            'month' => $month
-        ];
 
-        return $this;
+        if (isset($request->year) && $request->year) {
+            static::$timefillter['year']  = (int)$request->year;
+        } else {
+            static::$timefillter['year']  =  (int)now()->year;
+        }
+
+        if (isset($request->month) && $request->month) {
+            static::$timefillter['month']  = (int)$request->month;
+        } else {
+            static::$timefillter['month']  =  (int)now()->month;
+        }
+
+        return self::query()
+            ->with([
+                'employee:id,name,shift_id',
+                'shift:id,name_shift'
+            ])->select([
+                'employee_id',
+                'shift_id',
+                'type',
+            ])->groupBy([
+                'employee_id',
+                'shift_id',
+                'type',
+            ])->where('type', 'overtime')
+            ->paginate($request->limit);
     }
+
     public function getDataOvertimeTimekeepingAttribute()
     {
         $lableTypeShift = CommonConstants::TYPE_SHIFT;
@@ -51,6 +73,8 @@ class Timekeeping extends Model
         $getMasterOfEmployee = DB::table('timekeepings')
             ->where('employee_id', $this->employee_id)
             ->where('type', 'overtime')
+            ->whereMonth('timekeeping_date', static::$timefillter['month'])
+            ->whereYear('timekeeping_date', static::$timefillter['year'])
             ->pluck('id')
             ->toArray();
         $groupedResult = [];
