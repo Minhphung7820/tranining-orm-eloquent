@@ -67,20 +67,25 @@ class Timekeeping extends Model
         foreach ($configs as $order => $config) {
             $total = 0;
             if (isset($lableTypeShift[$config['type_shift']])) {
-                foreach ($getChildren as $orderTimeChild => $children) {
-                    if ($order === $orderTimeChild) {
-                        $startTime = strtotime($children['check_in']);
-                        $endTime = strtotime($children['check_out']);
+                $times = [];
+                foreach ($getChildren as  $children) {
+                    if (($order + 1) === $children['order']) {
 
+                        $startTime = strtotime($children['check_in']);
+
+                        $endTime = strtotime($children['check_out']);
                         $timeDiffInSeconds = $endTime - $startTime;
 
                         $totalHours = $timeDiffInSeconds / 3600;
 
-                        $total = number_format($totalHours, 2);
+                        $totalFormat = number_format($totalHours, 2);
+
+                        $times[] = (float)$totalFormat;
                     }
                 }
-                $lableTypeShift[$config['type_shift']] =  (float)$total;
+                $total = (float)number_format(array_sum($times), 2);
             }
+            $lableTypeShift[$config['type_shift']] = $total;
         }
         array_walk($lableTypeShift, function (&$value, $key) {
             if (is_string($value)) {
@@ -88,6 +93,6 @@ class Timekeeping extends Model
             }
         });
         $lableTypeShift['total_overtime'] = (float)number_format(array_sum($lableTypeShift), 2);
-        return $this->timefillter;
+        return $lableTypeShift;
     }
 }
