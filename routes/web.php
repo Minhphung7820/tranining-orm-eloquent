@@ -84,13 +84,14 @@ Route::get("/overtime", function () {
     $array = [
         "08:10:00",
         "08:14:00",
-        "08:15:00",
-        "08:44:00",
+        // "08:15:59",
+        // "08:44:00",
         "08:46:00",
         "09:40:00",
         "09:44:00",
         "10:20:00",
         "10:43:00",
+        "10:44:00",
         '13:15:00',
         '13:34:00',
         "16:49:00",
@@ -174,7 +175,12 @@ Route::get("/overtime", function () {
     // });
 
     $result = Overtime::make($array, $configs)
-        ->withMinutesFluctuates(15)
+        ->withMinutesFluctuates([
+            'come_early' => 15,
+            'come_delay' => 15,
+            'out_early' => 15,
+            'out_delay' => 15,
+        ])
         ->doCalculate();
 
 

@@ -10,7 +10,7 @@ class Overtime
 
     protected static $endWorkingTime = [];
 
-    protected static $minutesFluctuates = 15;
+    protected static $timeFluctuates = 15;
 
     protected static $timesScan = [];
 
@@ -23,47 +23,49 @@ class Overtime
         return new static();
     }
 
-    public function withMinutesFluctuates($minutes): self
+    public function withMinutesFluctuates(array $timeFluctuates): self
     {
-        static::$minutesFluctuates = $minutes;
+        static::$timeFluctuates = $timeFluctuates;
         return new static();
     }
 
-    public function getValidEntries($shift, $timesScan, $minutesFluctuates): array
+    public function getValidEntries($shift, $timesScan, $timeFluctuates): array
     {
-        return collect($timesScan)->filter(function ($time) use ($shift, $timesScan, $minutesFluctuates) {
-            $startTimeBefore = $this->getFluctuatingTime($shift[0], $minutesFluctuates, false);
-            $startTimeAfter = $this->getFluctuatingTime($shift[0], $minutesFluctuates);
-            $endTimeBefore = $this->getFluctuatingTime($shift[1], $minutesFluctuates, false);
-            $endTimeAfter = $this->getFluctuatingTime($shift[1], $minutesFluctuates);
-
-            $arrayInVariableCheckIn = array_filter($timesScan, function ($time) use ($startTimeBefore, $startTimeAfter) {
-                return $time >= $startTimeBefore && $time <= $startTimeAfter;
-            });
-
-            $arrayInVariableCheckOut = array_filter($timesScan, function ($time) use ($endTimeBefore, $endTimeAfter) {
-                return $time >= $endTimeBefore && $time <= $endTimeAfter;
-            });
-
-            if (empty($arrayInVariableCheckIn) || empty($arrayInVariableCheckOut)) {
-                return null;
+        $result = [];
+        $arrayCheckIn = [];
+        $arrayCheckOut = [];
+        $startTimeBefore = $this->getFluctuatingTime($shift[0], $timeFluctuates['come_early'], false);
+        $startTimeAfter = $this->getFluctuatingTime($shift[0], $timeFluctuates['come_delay']);
+        $endTimeBefore = $this->getFluctuatingTime($shift[1], $timeFluctuates['out_early'], false);
+        $endTimeAfter = $this->getFluctuatingTime($shift[1], $timeFluctuates['out_delay']);
+        foreach ($timesScan as $time) {
+            if ($time >= $startTimeBefore && $time <= $startTimeAfter) {
+                $arrayCheckIn[] = $time;
             }
 
-            return ($time >= min($arrayInVariableCheckIn)) && ($time <= max($arrayInVariableCheckOut));
-        })->toArray();
+            if ($time >= $endTimeBefore && $time <= $endTimeAfter) {
+                $arrayCheckOut[] = $time;
+            }
+        }
+        $result = [
+            'check_in' => !empty($arrayCheckIn) ? min($arrayCheckIn) : 'Chưa check in',
+            'check_out' => !empty($arrayCheckOut) ? max($arrayCheckOut)  :  'Chưa check out',
+        ];
+
+        return $result;
     }
 
     public function doCalculate(): array
     {
         $timesScan = static::$timesScan;
-        $minutesFluctuates = static::$minutesFluctuates;
+        $timeFluctuates = static::$timeFluctuates;
 
-        $shifts = collect(static::$startWorkingTime)->zip(static::$endWorkingTime)->mapWithKeys(function ($shift, $index) use ($timesScan, $minutesFluctuates) {
+        $shifts = collect(static::$startWorkingTime)->zip(static::$endWorkingTime)->mapWithKeys(function ($shift, $index) use ($timesScan, $timeFluctuates) {
 
-            $validEntries = $this->getValidEntries($shift, $timesScan, $minutesFluctuates);
+            $validEntries = $this->getValidEntries($shift, $timesScan, $timeFluctuates);
 
-            $checkIn =  !empty($validEntries) ? min($validEntries) : null;
-            $checkOut = !empty($validEntries) ? max($validEntries) : null;
+            $checkIn =  $validEntries['check_in'];
+            $checkOut = $validEntries['check_out'];
 
             return [
                 "time_config_" . ($index + 1) => [
