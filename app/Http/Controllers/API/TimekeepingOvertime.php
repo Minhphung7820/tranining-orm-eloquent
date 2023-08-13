@@ -18,16 +18,8 @@ class TimekeepingOvertime extends Controller
      */
     public function index(Request $request)
     {
-        $year = (int)now()->year;
-        $month = (int)now()->month;
-
-        if (isset($request->year) && $request->year) {
-            $year = (int) $request->year;
-        }
-
-        if (isset($request->month) && $request->month) {
-            $month = (int) $request->month;
-        }
+        $year = (int) $request->input('year', now()->year);
+        $month = (int) $request->input('month', now()->month);
 
         $timeKeepings = Timekeeping::withYearAndMonth($year, $month)
             ->with([
