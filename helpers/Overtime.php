@@ -47,13 +47,14 @@ class Overtime
         $endTimeAfter = $this->getFluctuatingTime($shift[1], $timeFluctuates['out_delay']);
         foreach ($timesScan as $time) {
             if ($time >= $startTimeBefore && $time <= $startTimeAfter) {
-                $arrayCheckIn[] = $time;
-            } elseif ($time < $shift[3] && $time >= $startTimeAfter) {
-                $arrayCheckIn['time'][] = $time;
+                $arrayCheckIn['in_zone'][] = $time;
+            } elseif ($time < $shift[2] && $time >= $startTimeAfter) {
+                $arrayCheckIn['out_zone'][] = $time;
             }
-
             if ($time >= $endTimeBefore && $time <= $endTimeAfter) {
-                $arrayCheckOut[] = $time;
+                $arrayCheckOut['in_zone'][] = $time;
+            } elseif ($time >= $shift[3] && $time <= $endTimeBefore) {
+                $arrayCheckOut['out_zone'][] = $time;
             }
         }
 
@@ -113,27 +114,55 @@ class Overtime
     {
         $timeSystem = static::$timeFluctuates;
 
-        if (isset($checkIn['time'])) {
-            $check_in = count($checkIn['time']) > 0 ? min($checkIn['time']) : null;
+        if (isset($checkIn['in_zone'])) {
+            $check_in = !empty($checkIn) > 0 ? min($checkIn['in_zone']) : null;
         } else {
-            $check_in = count($checkIn) > 0 ? min($checkIn) : null;
+            $check_in = !empty($checkIn['out_zone']) > 0 ? min($checkIn['out_zone']) : null;
         }
 
-        $check_out = count($checkOut) > 0 ? max($checkOut)  :  null;
+        if (isset($checkOut['in_zone'])) {
+            $check_out = !empty($checkOut) > 0 ? max($checkOut['in_zone']) : null;
+        } else {
+            $check_out = !empty($checkOut['out_zone']) > 0 ? max($checkOut['out_zone']) : null;
+        }
 
         $data = [
             'check_in' => $check_in,
             'check_out' => $check_out,
         ];
-        $status = null;
 
-        if (empty($checkIn) || empty($checkOut)) {
+        if (empty($checkIn) && empty($checkOut)) {
             $data['status'] = 'vắng';
+            return $data;
+        }
+
+        if ((isset($checkIn['out_zone']) && $checkIn['out_zone']) && empty($checkIn['in_zone'])) {
+            $timeWork = $this->calculationTime($check_in, $shift[2]);
+            $timeOff = $this->calculationTime($shift[0], $check_in);
+            if ($timeWork >= $timeOff) {
+                $data['status'] = 'đi trễ';
+            } else {
+                $data['status'] = 'Nghỉ sáng';
+            }
             return $data;
         }
 
         if (empty($check_in) && $check_out) {
             $data['status'] = 'quên checkin';
+            return $data;
+        }
+        // dd($checkOut);
+        if ((isset($checkOut['out_zone']) && $checkOut['out_zone']) && empty($checkOut['in_zone'])) {
+            $timeWork = $this->calculationTime($shift[3], $check_out);
+
+            $timeOff = $this->calculationTime($check_out, $shift[1]);
+
+
+            if ($timeWork >= $timeOff) {
+                $data['status'] = 'về sớm';
+            } else {
+                $data['status'] = 'Nghỉ chiều';
+            }
             return $data;
         }
 
@@ -142,17 +171,14 @@ class Overtime
             return $data;
         }
 
-        if (isset($checkIn['time']) && $checkIn['time']) {
-            $data['status'] = 'Nghỉ sáng';
-            return $data;
-        }
+
+
+
 
         if ($check_in >= $shift[0]) {
             $data['status'] = 'đi trễ';
             return $data;
         }
-
-
 
         if ($check_out <= $shift[1]) {
             $data['status'] = 'về sớm';
@@ -170,8 +196,17 @@ class Overtime
         $timeFirst = $this->timeToMinute($timeFirst);
         $timeSecond =  $this->timeToMinute($timeSecond);
         $timeEarlyDeparture = $this->minutesToHour($timeSecond - $timeFirst);
-
         return $timeEarlyDeparture;
+    }
+
+    public function timeToMinute($timeString)
+    {
+        $timeParts = explode(":", $timeString);
+        $hours = (int) $timeParts[0];
+        $minutes = (int) $timeParts[1];
+        $seconds = (int) $timeParts[2];
+        $totalMinutes = ($hours * 60) + $minutes  + ($seconds / 60);
+        return $totalMinutes;
     }
 
     public function minutesToHour($minutes)
