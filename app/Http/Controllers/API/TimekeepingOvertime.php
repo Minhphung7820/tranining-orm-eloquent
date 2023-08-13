@@ -108,8 +108,9 @@ class TimekeepingOvertime extends Controller
 
     public function getCountEmployeeByTypeOvertime($type, $request)
     {
-        $employee = Employee::with([
-            'shift' => function ($query) use ($type, $request) {
+        $employee = Employee::whereHas(
+            'shift',
+            function ($query) use ($type, $request) {
                 $query->whereHas('configOvertimes', function ($subQuery) use ($type, $request) {
                     switch ($type) {
                         case 'overtime_with_coefficient':
@@ -126,7 +127,7 @@ class TimekeepingOvertime extends Controller
                     }
                 });
             }
-        ]);
+        );
 
         if (isset($request->department_id) && $request->department_id) {
             $employee->whereHas('department', function ($query) use ($request) {
