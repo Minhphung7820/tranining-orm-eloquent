@@ -189,6 +189,7 @@ Route::get("/overtime", function () {
 
 
 
+
 Route::get("/time-sheet", function () {
     // Dùng collection không dùng vòng lặp
     $array = [
@@ -203,9 +204,9 @@ Route::get("/time-sheet", function () {
         '13:16:00',
         '13:34:00',
         '12:00:00',
-        "16:49:00",
-        // "17:15:00",
-        // "18:10:00",
+        "15:49:00",
+        "17:15:00",
+        "17:55:00",
         '18:14:00',
         '18:32:00',
         '18:40:00',
@@ -217,7 +218,11 @@ Route::get("/time-sheet", function () {
         '20:20:00',
         '20:22:00',
         // '20:58:36',
-        '21:23:00'
+        '20:44:00',
+        '22:23:00',
+        '22:23:00',
+        '23:23:00',
+        '23:5:00'
     ];
 
     $configs = [
@@ -227,10 +232,12 @@ Route::get("/time-sheet", function () {
             "break_time" => '12:00:00',
             "end_break_time" => '13:30:00',
         ],
-        // [
-        //     "start_time" => '13:30:00',
-        //     "end_time" => '17:00:00',
-        // ],
+        [
+            "start_time" => '18:00:00',
+            "end_time" => '23:30:00',
+            "break_time" => '21:30:00',
+            "end_break_time" => '22:00:00',
+        ],
 
     ];
 
